@@ -38,7 +38,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         if($result->num_rows == 0){
             $stmtSeparado = $conn->prepare(
                 "UPDATE encomenda
-                SET estado_encomenda = 'separada', data_separada = ?, id_separada = ?
+                SET estado_encomenda = 'separada', data_separado = ?, id_separado = ?
                 WHERE id_encomenda = ?"
             );
 
