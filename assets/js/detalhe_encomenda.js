@@ -256,3 +256,27 @@ if(formEditarEmail){
         }
     });
 }
+
+// Reenviar email de confirmacao
+const btnReenviarEmail = document.getElementById("btnReenviarEmail");
+btnReenviarEmail.addEventListener('click', async function () {
+    id_encomenda = btnReenviarEmail.dataset.id_encomenda;
+    
+    const response = await fetch('detalhe_encomenda.php', {
+        method:"post",
+        headers: {"Content-Type":"application/son"},
+        body:JSON.stringify({
+            acao:"reenviar_email",
+            id_encomenda : id_encomenda
+        })
+    });
+    
+    const data = await response.json();
+    
+    if(data["resultado"] == "sucesso"){
+        alert(data["msg"]);
+        location.reload();
+    } else {
+        alert(data["msg"]);
+    }
+})

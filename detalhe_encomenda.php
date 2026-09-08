@@ -47,13 +47,38 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             }
             $stmt->close();
             exit();
+                    
+        case "reenviar_email":
+            require_once("enviar_email.php");
+            $id_encomenda = $request["id_encomenda"];
+            $stmt = $conn->prepare("SELECT * FROM encomenda WHERE id_encomenda = ?");
+            $stmt->bind_param("i", $id_encomenda);
+            $stmt->execute();
+            $encomenda = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            
+            $num_encomenda = $encomenda["num_encomenda"];
+            $corpo_email = "Segue em anexo o comprovativo da encomenda N$num_encomenda. <br>
+            Será contactado(a) novamente por este meio, assim que estiver tudo pronto. <br><br>
+            Os melhores cumprimentos, <br>
+            Maria Papel Papelaria";
+            $assunto = "Confirmacao da encomenda N$num_encomenda";
+            $enviado = enviar_email($conn, $encomenda, $corpo_email, $assunto, $encomenda["doc_encomenda"]);
+            
+            if($enviado){
+                echo json_encode(['resultado'=>'sucesso', 'msg'=>'Email reenviado com sucesso!']);
+            }
+            else{
+                echo json_encode(['resultado'=>'erro', 'msg'=>'Falha ao atualizar o email.']);
+            }
+            exit();
     }
 }
-
+                            
 function concluir_encomenda(mysqli $conn, array $request){
     $id_encomenda = $request["id_encomenda"];
     $data = date("Y-m-d");
-
+    
     $conn->begin_transaction();
     try{
         // Marcar a encomenda como concluida
@@ -309,6 +334,7 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                             <strong>Email: </strong>
                                             <span id="emailDisplay"><?= htmlspecialchars($encomenda["email_encomenda"] ?? '') ?></span>
                                             <button class="primary small" id="btnEditarEmail" style="margin-left:8px; padding: 2px 8px;" data-id_encomenda="<?= $encomenda["id_encomenda"] ?>" data-email="<?= htmlspecialchars($encomenda["email_encomenda"] ?? '') ?>">Editar</button>
+                                            <button class="secondary small" id="btnReenviarEmail" style="margin-left:8px; padding: 2px 8px;" data-id_encomenda="<?= $encomenda["id_encomenda"] ?>">Reenviar email</button>
                                         </li>
                                     </ul>
                                 </div>

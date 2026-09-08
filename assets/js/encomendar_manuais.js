@@ -4,9 +4,7 @@ let manuais = [];
 const filtros_manuais = document.querySelectorAll(".filtros_manuais");
 
 filtros_manuais.forEach(filtro =>{    
-    filtro.addEventListener('change', async ()=>{
-        console.log("mudou");
-        
+    filtro.addEventListener('change', async ()=>{        
         // Verifica se pelo menos uma combobox está preenchida
         const agrupamento = document.getElementById('filtroAgrupamento').value;
         if(!agrupamento){

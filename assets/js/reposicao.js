@@ -365,9 +365,7 @@ function renderTabela(dados) {
         else if(element.concluido == 1){
             estado = "Concluído";
         }
-        else if(element.cancelado == 1){
-            console.log("cancelado");
-            
+        else if(element.cancelado == 1){            
             estado = "Cancelado"
         }
         else if(element.pedido == 1){
