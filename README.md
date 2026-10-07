@@ -1,6 +1,6 @@
 # MPP — Maria Papel Papelaria
 
-Sistema web de gestão de encomendas de manuais escolares, desenvolvido para a papelaria **Maria Papel Papelaria**, no âmbito da PAP (Prova de Aptidão Profissional) do curso profissional de [curso], na escola [nome da escola].
+Sistema web de gestão de encomendas de manuais escolares, desenvolvido para a papelaria **Maria Papel Papelaria**, no âmbito da PAP (Prova de Aptidão Profissional) do curso profissional de Programador de informática, na Escola Secundária Marques de Castilho.
 
 ## O que é
 
