@@ -7,7 +7,7 @@
 													<!-- Imagem alinhada à esquerda -->
 													<img src="images/logo_maria_papel.png" alt="Logo" class="logo-img">
 													<!-- Texto opcional ao lado da imagem -->
-													<span class="logo-text"> PAPGEST v3.0 - MARIA PAPEL PAPELARIA</span>
+													<span class="logo-text">MARIA PAPEL PAPELARIA - Sistema de gestão</span>
 												</div>
 
 										</section>
