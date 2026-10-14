@@ -1,6 +1,8 @@
 <?php
 // db_connect.php 
-
+require_once("vendor/autoload.php");
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
 
 
 ini_set('display_startup_errors', '0');
@@ -8,10 +10,10 @@ error_reporting(E_ALL);
 ini_set('log_errors', '1');
 
 // Configurações da base de dados
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'mpp3_bd');
+define('DB_HOST', $_ENV["DB_HOST"]);
+define('DB_USER', $_ENV["DB_USER"]);
+define('DB_PASS', $_ENV["DB_PASS"]);
+define('DB_NAME', $_ENV["DB_NAME"]);
 define('DB_CHARSET', 'utf8');
 
 // Definir timezone para Portugal - ESSENCIAL para datas corretas
