@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 	if (isset($_POST['adicionar'])) {
 		$nome_agrupamento = $_POST['nome_agrupamento'];
 
-		// Verifica se já existe uma disciplina com esse nome
+		// Verifica se já existe um agrupamento com esse nome
 		$sql = "SELECT * FROM agrupamento
 					WHERE nome_agrupamento = ?";
 		$stmt = $conn->prepare($sql);
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
 		if ($rows > 0) {
 			echo "<script type='text/javascript'>
-						alert('Já existe um agrupamento com esse nome na base de dados.');
+						alert('Já existe um agrupamento com esse nome.');
 						window.location.replace('gestao_disciplina.php');
 					</script>";
 			exit();
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
 		if ($rows > 0) {
 			echo "<script type='text/javascript'>
-						alert('Já existe um agrupamento com esse nome na base de dados.');
+						alert('Já existe um agrupamento com esse nome.');
 						window.location.replace('gestao_agrupamento.php');
 					</script>";
 			exit();
