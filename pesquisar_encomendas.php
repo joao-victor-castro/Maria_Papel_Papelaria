@@ -15,6 +15,15 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         case "nome_aluno":
             filtrar_nome_aluno($conn, $request);
             exit();
+
+        case "nome_ee":
+            filtrar_nome_ee($conn, $request);
+            exit();
+
+        case "num_telefone":
+            filtrar_num_telefone($conn, $request);
+            exit();
+        
     }
 }
 
@@ -34,6 +43,8 @@ function filtrar_num_encomenda(mysqli $conn, array $request){
     echo json_encode(['resultado'=>$rows]);
     return;
 }
+
+
 function filtrar_nome_aluno(mysqli $conn, array $request){
     $nome_aluno = '%' . $request["filtro"] . '%';
 
@@ -44,6 +55,42 @@ function filtrar_nome_aluno(mysqli $conn, array $request){
         ORDER BY nome_ano_escolar ASC"
     );
     $stmt->bind_param("s", $nome_aluno);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    echo json_encode(['resultado'=>$rows]);
+    return;
+}
+
+
+function filtrar_nome_ee(mysqli $conn, array $request){
+    $nome_ee = '%' . $request["filtro"] . '%';
+
+    $stmt = $conn->prepare(
+        "SELECT encomenda.* , ano_escolar.nome_ano_escolar FROM encomenda
+        JOIN ano_escolar ON encomenda.id_ano_encomenda = ano_escolar.id_ano_escolar
+        WHERE ee_encomenda LIKE CONCAT('%', REPLACE(?, ' ', '%'), '%')
+        ORDER BY nome_ano_escolar ASC"
+    );
+    $stmt->bind_param("s", $nome_ee);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = $result->fetch_all(MYSQLI_ASSOC);
+    echo json_encode(['resultado'=>$rows]);
+    return;
+}
+
+
+function filtrar_num_telefone(mysqli $conn, array $request){
+    $num_telefone = trim($request["filtro"]);
+
+    $stmt = $conn->prepare(
+        "SELECT encomenda.* , ano_escolar.nome_ano_escolar FROM encomenda
+        JOIN ano_escolar ON encomenda.id_ano_encomenda = ano_escolar.id_ano_escolar
+        WHERE telefone_encomenda = ?
+        ORDER BY nome_ano_escolar ASC"
+    );
+    $stmt->bind_param("s", $num_telefone);
     $stmt->execute();
     $result = $stmt->get_result();
     $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -89,8 +136,15 @@ function filtrar_nome_aluno(mysqli $conn, array $request){
                                             <div class="col-12">
                                                 <input type="radio" name="filtro" value="num_encomenda" id="filtro_num" checked>
                                                 <label for="filtro_num">Num. encomenda</label>
+
                                                 <input type="radio" name="filtro" value="nome_aluno" id="nome_aluno">
                                                 <label for="nome_aluno">Nome aluno</label>
+
+                                                <input type="radio" name="filtro" value="nome_ee" id="nome_ee">
+                                                <label for="nome_ee">Nome E.E.</label>
+
+                                                <input type="radio" name="filtro" value="num_telefone" id="num_telefone">
+                                                <label for="num_telefone">Nº telefone</label>
                                             </div>
                                             <div class="col-3">
                                                 <input type="text" id="filtro_input">
