@@ -206,7 +206,8 @@ function att_manuais_pedido(mysqli $conn){
 								// Vai a base de dados buscar todos os manuais com quant_pedir
 								$result = $conn->query("SELECT manual.*, editora.nome_editora FROM manual
 														JOIN editora ON manual.id_editora = editora.id_editora
-														WHERE quant_manuais_pedir > 0");
+														WHERE quant_manuais_pedir > 0
+														ORDER BY nome_editora, quant_manuais_pedir DESC");
 								$manuais = $result->fetch_all(MYSQLI_ASSOC);
 
 								$valor_total = 0;
