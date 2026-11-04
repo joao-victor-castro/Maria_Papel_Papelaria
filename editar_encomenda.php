@@ -3,8 +3,8 @@
 session_start();
 include('db_connect.php');
 
-if($_SERVER["REQUEST_METHOD"] == "POST"){
-    $request = json_decode(file_get_contents('php://input'),true);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $request = json_decode(file_get_contents('php://input'), true);
 
     // Começa o processo de alteração dos dados
     $conn->begin_transaction();
@@ -19,7 +19,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             WHERE id_encomenda = ? AND id_manual = ?"
         );
 
-        foreach($request["dados"] as $manual){
+        foreach ($request["dados"] as $manual) {
             $id_manual = $manual["id_manual"];
             $manual_separado = 1;
             $stmt->bind_param("isiii", $manual_separado, $data, $id_utilizador, $id_encomenda, $id_manual);
@@ -34,8 +34,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $stmtCheck->bind_param("i", $id_encomenda);
         $stmtCheck->execute();
         $result = $stmtCheck->get_result();
-        
-        if($result->num_rows == 0){
+
+        if ($result->num_rows == 0) {
             $stmtSeparado = $conn->prepare(
                 "UPDATE encomenda
                 SET estado_encomenda = 'separada', data_separado = ?, id_separado = ?
@@ -62,11 +62,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $conn->commit();
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['resultado'=>'erro', 'msg'=>"Não foi possível fazer as alterações - $e"]);
+        echo json_encode(['resultado' => 'erro', 'msg' => "Não foi possível fazer as alterações - $e"]);
         exit();
     }
 
-    echo json_encode(['resultado'=>'sucesso', 'msg'=>'Encomenda atualizada com sucesso!']);
+    echo json_encode(['resultado' => 'sucesso', 'msg' => 'Encomenda atualizada com sucesso!']);
     exit();
 }
 
@@ -101,28 +101,28 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                         <h2>Editar encomenda ID: <?= $_GET["id"] ?></h2>
 
                         <!-- Detalhes da encomenda -->
-                        <?php 
-                            $stmt = $conn->prepare(
-                                "SELECT encomenda.*, utilizador.username, agrupamento.nome_agrupamento FROM encomenda
+                        <?php
+                        $stmt = $conn->prepare(
+                            "SELECT encomenda.*, utilizador.username, agrupamento.nome_agrupamento FROM encomenda
                                 JOIN utilizador ON utilizador.id_utilizador = encomenda.id_utilizador
                                 LEFT JOIN agrupamento ON agrupamento.id_agrupamento = encomenda.id_agrupamento
                                 WHERE id_encomenda = ?"
-                            );
+                        );
 
-                            $stmt->bind_param("i", $_GET["id"]);
+                        $stmt->bind_param("i", $_GET["id"]);
 
-                            $stmt->execute();
+                        $stmt->execute();
 
-                            $result = $stmt->get_result();
+                        $result = $stmt->get_result();
 
-                            if($result->num_rows != 1){
-                                $stmt->close();
-                                header("Location: tratar_encomendas.php");
-                                exit();
-                            }
-
-                            $encomenda = $result->fetch_assoc();
+                        if ($result->num_rows != 1) {
                             $stmt->close();
+                            header("Location: tratar_encomendas.php");
+                            exit();
+                        }
+
+                        $encomenda = $result->fetch_assoc();
+                        $stmt->close();
                         ?>
                         <div class="box">
                             <h3>Detalhes da encomenda</h3>
@@ -150,33 +150,30 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                     <ul class="alt">
                                         <li>
                                             <strong>Plastificar Manuais: </strong>
-                                            <?php 
-                                            if($encomenda["plast_manuais"] == 1){
+                                            <?php
+                                            if ($encomenda["plast_manuais"] == 1) {
                                                 echo "Sim";
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
                                         </li>
                                         <li>
                                             <strong>Plastificas livro de fichas: </strong>
-                                            <?php 
-                                            if($encomenda["plast_livro_fichas"] == 1){
+                                            <?php
+                                            if ($encomenda["plast_livro_fichas"] == 1) {
                                                 echo "Sim";
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
                                         </li>
                                         <li>
-                                            <strong>Etiquetas: </strong> 
-                                            <?php 
-                                            if($encomenda["etiquetas"] == 1){
+                                            <strong>Etiquetas: </strong>
+                                            <?php
+                                            if ($encomenda["etiquetas"] == 1) {
                                                 echo "Sim - " . $encomenda["obs_etiquetas"];
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
@@ -204,14 +201,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
                             <div class="row aln-middle" style="margin-top: 10px;">
                                 <div class="col-4 col-12-small">
-                                    <?php 
+                                    <?php
                                     $cores_estados = [
-                                        'registada'=>'darkred',
-                                        'pedida'=>'orange',
-                                        'separada'=>'teal',
-                                        'concluida'=>'goldenrod',
-                                        'entregue'=>'green',
-                                        'cancelada'=>'red'
+                                        'registada' => 'darkred',
+                                        'pedida' => 'orange',
+                                        'separada' => 'teal',
+                                        'concluida' => 'goldenrod',
+                                        'entregue' => 'green',
+                                        'cancelada' => 'red'
                                     ]
                                     ?>
                                     <h4><strong>Estado da encomenda: <span style="color:<?= $cores_estados[$encomenda['estado_encomenda']] ?>"><?= $encomenda["estado_encomenda"] ?></span></strong></h4>
@@ -223,7 +220,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                         <div class="box">
                             <h3>Observações da encomenda</h3>
 
-                            <?php 
+                            <?php
                             $stmt = $conn->prepare(
                                 "SELECT * FROM observacao_encomenda
                                 JOIN utilizador ON observacao_encomenda.id_utilizador = utilizador.id_utilizador
@@ -235,46 +232,44 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                             $result = $stmt->get_result();
                             $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-                            foreach($rows as $obs){
+                            foreach ($rows as $obs) {
                                 // Verifica se é uma observação automatica
-                                if(str_starts_with($obs["observacao_encomenda"],"MPP3:")){
+                                if (str_starts_with($obs["observacao_encomenda"], "MPP3:")) {
                                     $obs_automatica = true;
-                                }
-                                else{
+                                } else {
                                     $obs_automatica = false;
                                 }
-                                ?>
+                            ?>
                                 <dl>
                                     <dt><?= $obs["username"] ?> : <?= $obs["data_observacao"] ?></dt>
-                                    
+
                                     <?php
-                                    if($obs_automatica){?>
+                                    if ($obs_automatica) { ?>
                                         <dd><strong style="color: green;"><?= $obs["observacao_encomenda"] ?></strong></dd>
-                                        <?php 
-                                    }
-                                    else{?>
-                                    <dd><strong style="color: red;"><?= $obs["observacao_encomenda"] ?></strong></dd>
+                                    <?php
+                                    } else { ?>
+                                        <dd><strong style="color: red;"><?= $obs["observacao_encomenda"] ?></strong></dd>
                                     <?php } ?>
                                 </dl>
                             <?php
                             }
-							?>
+                            ?>
                         </div>
 
                         <!-- Manuais da encomenda -->
-                        <?php 
-                            $stmt = $conn->prepare(
-                                "SELECT encomenda_manual.*, manual.*, disciplina.nome_disciplina, utilizador.username FROM encomenda_manual
+                        <?php
+                        $stmt = $conn->prepare(
+                            "SELECT encomenda_manual.*, manual.*, disciplina.nome_disciplina, utilizador.username FROM encomenda_manual
                                 JOIN manual ON manual.id_manual = encomenda_manual.id_manual
                                 JOIN disciplina ON disciplina.id_disciplina = manual.id_disciplina
                                 LEFT JOIN utilizador ON utilizador.id_utilizador = encomenda_manual.id_separado
                                 WHERE id_encomenda = ?"
-                            );
+                        );
 
-                            $stmt->bind_param("i", $_GET["id"]);
-                            $stmt->execute();
-                            $result = $stmt->get_result();
-                            $manuais = $result->fetch_all(MYSQLI_ASSOC);
+                        $stmt->bind_param("i", $_GET["id"]);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        $manuais = $result->fetch_all(MYSQLI_ASSOC);
                         ?>
                         <div class="box">
                             <h3>Manuais da encomenda</h3>
@@ -287,6 +282,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                             <th>Nome do manual</th>
                                             <th>Disciplina</th>
                                             <th>Tipo de manual</th>
+                                            <th>Voucher</th>
                                             <th>Manual separado</th>
                                             <th>Data separação</th>
                                             <th>Utilizador</th>
@@ -294,8 +290,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                     </thead>
 
                                     <tbody>
-                                    <?php 
-                                        foreach($manuais as $manual){?>
+                                        <?php
+                                        foreach ($manuais as $manual) { ?>
                                             <tr>
                                                 <td><?= $manual["isbn_manual"] ?></td>
                                                 <td><?= $manual["nome_manual"] ?></td>
@@ -303,41 +299,48 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                                                 <td><?= $manual["tipo_manual"] ?></td>
                                                 <td>
                                                     <?php 
-                                                    if($manual["manual_separado"] == 1){?>
+                                                    if($manual["voucher"] == 0){
+                                                        echo "Não";
+                                                    }
+                                                    else{
+                                                        echo "Sim";
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    if ($manual["manual_separado"] == 1) { ?>
                                                         <input type="checkbox" id="<?= $manual["id_manual"] ?>" checked disabled>
                                                         <label for="<?= $manual["id_manual"] ?>"></label>
-                                                        <?php 
-                                                    }
-                                                    else{?>
-                                                    <input type="checkbox" id="<?= $manual["id_manual"] ?>" class="manualSeparado">
-                                                    <label for="<?= $manual["id_manual"] ?>"></label>
+                                                    <?php
+                                                    } else { ?>
+                                                        <input type="checkbox" id="<?= $manual["id_manual"] ?>" class="manualSeparado">
+                                                        <label for="<?= $manual["id_manual"] ?>"></label>
                                                     <?php
                                                     }
                                                     ?>
                                                 </td>
                                                 <td>
-                                                    <?php 
-                                                        if(!isset($manual["data_separacao"])){
-                                                            echo "-";
-                                                        }
-                                                        else{
-                                                            echo date('d/m/Y', strtotime($manual["data_separacao"])); 
-                                                        }
+                                                    <?php
+                                                    if (!isset($manual["data_separacao"])) {
+                                                        echo "-";
+                                                    } else {
+                                                        echo date('d/m/Y', strtotime($manual["data_separacao"]));
+                                                    }
                                                     ?>
                                                 </td>
                                                 <td>
-                                                    <?php 
-                                                        if(!isset($manual["id_separado"])){
-                                                            echo "-";
-                                                        }
-                                                        else{
-                                                            echo $manual["username"]; 
-                                                        }
+                                                    <?php
+                                                    if (!isset($manual["id_separado"])) {
+                                                        echo "-";
+                                                    } else {
+                                                        echo $manual["username"];
+                                                    }
                                                     ?>
                                                 </td>
                                             </tr>
                                         <?php }
-                                    ?>
+                                        ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -352,7 +355,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                             </div>
                         </div>
 
-                        
+
 
 
                     <?php } else {
@@ -391,7 +394,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     </div>
 
     <!-- Scripts -->
-     <script src="assets/js/editar_encomenda.js"></script>
+    <script src="assets/js/editar_encomenda.js"></script>
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/browser.min.js"></script>
     <script src="assets/js/breakpoints.min.js"></script>
