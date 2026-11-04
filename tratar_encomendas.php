@@ -196,10 +196,19 @@ function gerar_pdf_aviso(mysqli $conn, array $encomendas)
 function getEncomendas(mysqli $conn)
 {
 	$stmt = $conn->prepare(
-		"SELECT encomenda.*, utilizador.username, agrupamento.nome_agrupamento, DATEDIFF(NOW(), encomenda.data_encomenda) AS 'datediff' FROM encomenda
-		LEFT JOIN utilizador ON encomenda.id_avisado=utilizador.id_utilizador
-		LEFT JOIN agrupamento ON agrupamento.id_agrupamento = encomenda.id_agrupamento
-		WHERE estado_encomenda <> 'entregue'"
+		"SELECT
+    encomenda.*,
+    utilizador.username,
+    agrupamento.nome_agrupamento,
+    DATEDIFF(
+        NOW(), encomenda.data_encomenda) AS 'datediff',
+    (SELECT COUNT(*) FROM encomenda_manual WHERE manual_separado = 0 AND id_encomenda = encomenda.id_encomenda) AS 'manuais_a_separar'
+    FROM
+        encomenda
+    LEFT JOIN utilizador ON encomenda.id_avisado = utilizador.id_utilizador
+    LEFT JOIN agrupamento ON agrupamento.id_agrupamento = encomenda.id_agrupamento
+    WHERE
+        estado_encomenda <> 'entregue'"
 	);
 
 	$stmt->execute();

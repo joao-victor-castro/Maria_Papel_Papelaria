@@ -79,7 +79,7 @@ async function getEncomendas(){
 // Renderizar tabelas
 function renderTabela_a_tratar(encomendas){
     const thead = document.querySelector('thead');
-    const headers = ["Agrupamento", "Num. encomenda", "Data da encomenda", "Dias em espera", " "];
+    const headers = ["Agrupamento", "Num. encomenda", "Data da encomenda", "Manuais a separar", "Dias em espera", " "];
 
     thead.innerHTML = '';
     const linha_cabecalho = document.createElement('tr');
@@ -113,6 +113,10 @@ function renderTabela_a_tratar(encomendas){
         const data_encomenda = document.createElement('td');
         data_encomenda.innerText = encomenda.data_encomenda;
         linha.appendChild(data_encomenda);
+
+        const manuais_a_separar = document.createElement('td');
+        manuais_a_separar.innerText = encomenda.manuais_a_separar;
+        linha.appendChild(manuais_a_separar);
 
         const dias_espera = document.createElement('td');
         dias_espera.innerText = encomenda.datediff;
