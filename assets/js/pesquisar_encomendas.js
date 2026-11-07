@@ -60,7 +60,8 @@ function renderTabela(encomendas){
                 'separada':'teal',
                 'concluida':'goldenrod',
                 'entregue':'green',
-                'cancelada':'red'
+                'cancelada':'red',
+                'parcialmente_separada':'navy'
         };
         estado_encomenda.style.color = cores_estados[encomenda.estado_encomenda];
         linha.appendChild(estado_encomenda);

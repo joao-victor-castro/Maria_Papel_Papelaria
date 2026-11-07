@@ -6,7 +6,8 @@ const cores_estados = {
     'separada': 'teal',
     'concluida': 'goldenrod',
     'entregue': 'green',
-    'cancelada': 'red'
+    'cancelada': 'red',
+    'parcialmente_separada':'navy'
 };
 
 (async ()=>{

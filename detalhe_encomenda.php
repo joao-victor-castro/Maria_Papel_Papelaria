@@ -371,7 +371,8 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                         'separada'=>'teal',
                                         'concluida'=>'goldenrod',
                                         'entregue'=>'green',
-                                        'cancelada'=>'red'
+                                        'cancelada'=>'red',
+                                        'parcialmente_separada'=>'navy'
                                     ]
                                     ?>
                                     <h4><strong>Estado da encomenda: <span style="color:<?= $cores_estados[$encomenda['estado_encomenda']] ?>"><?= $encomenda["estado_encomenda"] ?></span></strong></h4>

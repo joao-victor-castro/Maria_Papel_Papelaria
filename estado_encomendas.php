@@ -61,7 +61,7 @@ function getEncomendas(mysqli $conn){
 										<div class="row" style="margin-bottom: 10px;">
 											<div class="col-12">
 												<?php
-												$estados = ['registada', 'pedida', 'separada', 'concluida', 'entregue', 'cancelada'];
+												$estados = ['registada', 'pedida', 'parcialmente_separada', 'separada', 'concluida', 'entregue', 'cancelada'];
 												foreach($estados as $estado){?>
 													<input type="checkbox" class="filtroEstado" id="estado_<?= $estado ?>" value="<?= $estado ?>">
 													<label for="estado_<?= $estado ?>"><?= ucfirst($estado) ?></label>

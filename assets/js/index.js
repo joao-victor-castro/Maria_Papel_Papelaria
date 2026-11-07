@@ -1,6 +1,7 @@
 const CORES_ESTADOS = {
     'registada': 'darkred',
     'pedida':    'orange',
+    'parcialmente_separada':'navy',
     'separada':  'purple',
     'concluida': 'goldenrod',
     'entregue':  'green',

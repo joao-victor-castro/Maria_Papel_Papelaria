@@ -319,7 +319,8 @@ async function filtrar_encomendas(){
     if(tabela_ativa == "a_tratar"){
         encomendas_selecionadas = encomendas_selecionadas.filter(encomenda=> 
             encomenda.estado_encomenda == "registada" ||
-            encomenda.estado_encomenda == "pedida"
+            encomenda.estado_encomenda == "pedida" ||
+            encomenda.estado_encomenda == "parcialmente_separada"
         );
 
         renderTabela_a_tratar(encomendas_selecionadas);

@@ -13,6 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $data = date("Y-m-d");
         $id_encomenda = $request["id_encomenda"];
 
+        // Atualiza cada manual para o estado de separado
         $stmt = $conn->prepare(
             "UPDATE encomenda_manual
             SET manual_separado = ?, data_separacao = ?, id_separado = ?
@@ -27,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // Verifica se todos os manuais estão separados
+        // Atualiza para 'separado' se sim, para 'parcialmente separado' se não
         $stmtCheck = $conn->prepare(
             "SELECT id_manual FROM encomenda_manual
             WHERE id_encomenda = ? AND manual_separado = 0"
@@ -47,6 +49,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmtSeparado->close();
 
             $obs_separada = "MPP3: A encomenda passou ao estado de separada.";
+            $data_separada = date("Y-m-d H:i:s");
+            $stmt_separada = $conn->prepare(
+                "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
+                VALUES (?,?,?,?)"
+            );
+            $stmt_separada->bind_param("issi", $id_encomenda, $obs_separada, $data_separada, $id_utilizador);
+            $stmt_separada->execute();
+            $stmt_separada->close();
+        }
+        else{
+            $stmtSeparado = $conn->prepare(
+                "UPDATE encomenda
+                SET estado_encomenda = 'parcialmente_separada'
+                WHERE id_encomenda = ?"
+            );
+
+            $stmtSeparado->bind_param("i", $id_encomenda);
+            $stmtSeparado->execute();
+            $stmtSeparado->close();
+
+            $obs_separada = "MPP3: A encomenda passou ao estado de parcialmente separada.";
             $data_separada = date("Y-m-d H:i:s");
             $stmt_separada = $conn->prepare(
                 "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
@@ -208,7 +231,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         'separada' => 'teal',
                                         'concluida' => 'goldenrod',
                                         'entregue' => 'green',
-                                        'cancelada' => 'red'
+                                        'cancelada' => 'red',
+                                        'parcialmente_separada'=>'navy'
                                     ]
                                     ?>
                                     <h4><strong>Estado da encomenda: <span style="color:<?= $cores_estados[$encomenda['estado_encomenda']] ?>"><?= $encomenda["estado_encomenda"] ?></span></strong></h4>
