@@ -1,16 +1,20 @@
-let tempo_limite = 20 * 60 * 1000 // Minutos para milissegundos
-let timer;
+heartbeat();
 
-function iniciarContagem(){
-    clearTimeout(timer);
-    timer = setTimeout(()=>{
-        alert("Sessão expirada por inatividade.")
-        window.location.href = "logout.php";
-    }, tempo_limite);   
+function heartbeat(){
+    console.log("Mandando beat");
+
+    fetch('timeout.php', {
+        method: "post",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            "sinal" : "sinal"
+        })
+    }).then(response=>response.json())
+    .then(data=>{
+        if(data["expirou"] ==  true){
+            window.location.href = "logout.php";
+        }
+    })
 }
 
-document.addEventListener("mousemove", iniciarContagem);
-document.addEventListener("keypress", iniciarContagem);
-document.addEventListener("click", iniciarContagem);
-
-iniciarContagem();
+setInterval(heartbeat, 30000);

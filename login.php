@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['nome_utilizador'] = $user['nome_utilizador'];
                     $_SESSION['e_administrador'] = $user['e_administrador'];
                     $_SESSION['password_alterada'] = $user['password_alterada'];
+                    $_SESSION["sinal_anterior"] = time();
                     
                     // REGRA: Se password_alterada = 0, redirecionar para alteração de password
                     if ($user['password_alterada'] == 0) {
