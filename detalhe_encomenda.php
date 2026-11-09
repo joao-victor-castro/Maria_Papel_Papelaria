@@ -4,28 +4,27 @@ session_start();
 include('db_connect.php');
 ini_set('display_errors', '0');
 
-if($_SERVER["REQUEST_METHOD"] == "POST"){
-	header('Content-Type: application/json');
-	if(ob_get_length()) ob_clean();
-	$request = json_decode(file_get_contents('php://input'),true);
-	$data = date("Y-m-d H:i:s");
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    header('Content-Type: application/json');
+    if (ob_get_length()) ob_clean();
+    $request = json_decode(file_get_contents('php://input'), true);
+    $data = date("Y-m-d H:i:s");
 
-    switch($request["acao"]){
+    switch ($request["acao"]) {
         case "add_obs":
             $stmt = $conn->prepare(
                 "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
                 VALUES (?,?,?,?)"
             );
-        
+
             $stmt->bind_param("issi", $request["id_encomenda"], $request["obs"], $data, $_SESSION["user_id"]);
-            if($stmt->execute()){
-                echo json_encode(['resultado'=>'Observação adicionada com sucesso']);
-                }
-            else{
-                echo json_encode(['resultado'=>'Falha ao adicionar observação']);
+            if ($stmt->execute()) {
+                echo json_encode(['resultado' => 'Observação adicionada com sucesso']);
+            } else {
+                echo json_encode(['resultado' => 'Falha ao adicionar observação']);
             }
             exit();
-        
+
         case "concluir_encomenda":
             concluir_encomenda($conn, $request);
             exit();
@@ -40,14 +39,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                 "UPDATE encomenda SET email_encomenda = ? WHERE id_encomenda = ?"
             );
             $stmt->bind_param("si", $request["email"], $request["id_encomenda"]);
-            if($stmt->execute()){
-                echo json_encode(['resultado'=>'sucesso', 'msg'=>'Email atualizado com sucesso!']);
+            if ($stmt->execute()) {
+                echo json_encode(['resultado' => 'sucesso', 'msg' => 'Email atualizado com sucesso!']);
             } else {
-                echo json_encode(['resultado'=>'erro', 'msg'=>'Falha ao atualizar o email.']);
+                echo json_encode(['resultado' => 'erro', 'msg' => 'Falha ao atualizar o email.']);
             }
             $stmt->close();
             exit();
-                    
+
         case "reenviar_email":
             require_once("enviar_email.php");
             $id_encomenda = $request["id_encomenda"];
@@ -56,7 +55,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             $stmt->execute();
             $encomenda = $stmt->get_result()->fetch_assoc();
             $stmt->close();
-            
+
             $num_encomenda = $encomenda["num_encomenda"];
             $corpo_email = "Segue em anexo o comprovativo da encomenda N$num_encomenda. <br>
             Será contactado(a) novamente por este meio, assim que estiver tudo pronto. <br><br>
@@ -64,23 +63,46 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             Maria Papel Papelaria";
             $assunto = "Confirmacao da encomenda N$num_encomenda";
             $enviado = enviar_email($conn, $encomenda, $corpo_email, $assunto, $encomenda["doc_encomenda"]);
-            
-            if($enviado){
-                echo json_encode(['resultado'=>'sucesso', 'msg'=>'Email reenviado com sucesso!']);
+
+            if ($enviado) {
+                echo json_encode(['resultado' => 'sucesso', 'msg' => 'Email reenviado com sucesso!']);
+            } else {
+                echo json_encode(['resultado' => 'erro', 'msg' => 'Falha ao atualizar o email.']);
             }
-            else{
-                echo json_encode(['resultado'=>'erro', 'msg'=>'Falha ao atualizar o email.']);
+            exit();
+
+        case "avisar_parcial":
+            require_once("enviar_email.php");
+            $id_encomenda = $request["id_encomenda"];
+            $stmt = $conn->prepare("SELECT * FROM encomenda WHERE id_encomenda = ?");
+            $stmt->bind_param("i", $id_encomenda);
+            $stmt->execute();
+            $encomenda = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            $num_encomenda = $encomenda["num_encomenda"];
+            $corpo_email = "A sua encomenda N$num_encomenda ainda não está pronta, mas já tem alguns livros para levantamento. <br><br>
+            Os melhores cumprimentos, <br>
+            Maria Papel Papelaria";
+            $assunto = "Livros para levantar";
+            $enviado = enviar_email($conn, $encomenda, $corpo_email, $assunto);
+
+            if ($enviado) {
+                echo json_encode(['resultado' => 'sucesso', 'msg' => 'Email reenviado com sucesso!']);
+            } else {
+                echo json_encode(['resultado' => 'erro', 'msg' => 'Falha ao atualizar o email.']);
             }
             exit();
     }
 }
-                            
-function concluir_encomenda(mysqli $conn, array $request){
+
+function concluir_encomenda(mysqli $conn, array $request)
+{
     $id_encomenda = $request["id_encomenda"];
     $data = date("Y-m-d");
-    
+
     $conn->begin_transaction();
-    try{
+    try {
         // Marcar a encomenda como concluida
         $stmt_concluida = $conn->prepare(
             "UPDATE encomenda 
@@ -89,7 +111,7 @@ function concluir_encomenda(mysqli $conn, array $request){
         );
         $stmt_concluida->bind_param("isi", $_SESSION["user_id"], $data, $id_encomenda);
         $stmt_concluida->execute();
-    
+
         // Adicionar observação
         $stmt_obs = $conn->prepare(
             "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
@@ -103,25 +125,25 @@ function concluir_encomenda(mysqli $conn, array $request){
         $stmt_obs->close();
         $stmt_concluida->close();
         $conn->commit();
-    }
-    catch(Exception $e){
+    } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['resultado'=>'erro', 'msg'=>$e->getMessage()]);
+        echo json_encode(['resultado' => 'erro', 'msg' => $e->getMessage()]);
         return;
     }
 
-    echo json_encode(['resultado'=>'sucesso', 'msg'=>'Encomenda concluída com sucesso!']);
+    echo json_encode(['resultado' => 'sucesso', 'msg' => 'Encomenda concluída com sucesso!']);
     return;
 }
 
-function entregar_encomenda(mysqli $conn, array $request){
+function entregar_encomenda(mysqli $conn, array $request)
+{
     $id_encomenda = $request["id_encomenda"];
     $data = date("Y-m-d");
     $caucao_levantamento = floatval($request["caucaoLevantamento"]);
     $data = date("Y-m-d");
 
     $conn->begin_transaction();
-    try{
+    try {
         // Marcar a encomenda como entregue
         // Adiciona valor da caução de levantamento
 
@@ -130,9 +152,9 @@ function entregar_encomenda(mysqli $conn, array $request){
             SET estado_encomenda = 'entregue', id_entregue = ?, data_entregue = ?, caucao_levantamento = ?
             WHERE id_encomenda = ?"
         );
-        $stmt_entregue->bind_param("isdi", $_SESSION["user_id"], $data, $caucao_levantamento,$id_encomenda);
+        $stmt_entregue->bind_param("isdi", $_SESSION["user_id"], $data, $caucao_levantamento, $id_encomenda);
         $stmt_entregue->execute();
-    
+
         // Adicionar observação
         $stmt_obs = $conn->prepare(
             "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
@@ -142,27 +164,27 @@ function entregar_encomenda(mysqli $conn, array $request){
         $obs = "MPP3: A encomenda passou ao estado de entregue.";
         $stmt_obs->bind_param("issi", $id_encomenda, $obs, $data_obs, $_SESSION["user_id"]);
         $stmt_obs->execute();
-        
+
 
         $stmt_obs->close();
         $stmt_entregue->close();
         $conn->commit();
-    }
-    catch(Exception $e){
+    } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['resultado'=>'erro', 'msg'=>$e->getMessage()]);
+        echo json_encode(['resultado' => 'erro', 'msg' => $e->getMessage()]);
         return;
     }
 
-    echo json_encode(['resultado'=>'sucesso', 'msg'=>'Encomenda entregue com sucesso!']);
+    echo json_encode(['resultado' => 'sucesso', 'msg' => 'Encomenda entregue com sucesso!']);
     return;
 }
-function cancelar_encomenda(mysqli $conn, array $request){
+function cancelar_encomenda(mysqli $conn, array $request)
+{
     $id_encomenda = $request["id_encomenda"];
     $data = date("Y-m-d");
 
     $conn->begin_transaction();
-    try{
+    try {
         // Marcar a encomenda como canelada
         $stmt_entregue = $conn->prepare(
             "UPDATE encomenda 
@@ -171,7 +193,7 @@ function cancelar_encomenda(mysqli $conn, array $request){
         );
         $stmt_entregue->bind_param("isi", $_SESSION["user_id"], $data, $id_encomenda);
         $stmt_entregue->execute();
-    
+
         // Adicionar observação
         $stmt_obs = $conn->prepare(
             "INSERT INTO observacao_encomenda (id_encomenda, observacao_encomenda, data_observacao, id_utilizador)
@@ -197,8 +219,8 @@ function cancelar_encomenda(mysqli $conn, array $request){
             SET quant_manuais_pedir = quant_manuais_pedir - 1, quant_manuais_enc = quant_manuais_enc - 1
             WHERE id_manual = ?"
         );
-        foreach($manuais as $manual){
-            $stmt_quant_pedir->bind_param("i",$manual["id_manual"]);
+        foreach ($manuais as $manual) {
+            $stmt_quant_pedir->bind_param("i", $manual["id_manual"]);
             $stmt_quant_pedir->execute();
         }
 
@@ -207,14 +229,13 @@ function cancelar_encomenda(mysqli $conn, array $request){
         $stmt_manuais->close();
         $stmt_entregue->close();
         $conn->commit();
-    }
-    catch(Exception $e){
+    } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['resultado'=>'erro', 'msg'=>$e->getMessage()]);
+        echo json_encode(['resultado' => 'erro', 'msg' => $e->getMessage()]);
         return;
     }
 
-    echo json_encode(['resultado'=>'sucesso', 'msg'=>'Encomenda cancelada com sucesso!']);
+    echo json_encode(['resultado' => 'sucesso', 'msg' => 'Encomenda cancelada com sucesso!']);
     return;
 }
 ?>
@@ -249,31 +270,32 @@ function cancelar_encomenda(mysqli $conn, array $request){
 
                         <!-- Detalhes da encomenda -->
                         <div class="box">
-                            <?php 
-                                $stmt = $conn->prepare(
-                    "SELECT encomenda.*, utilizador.username, agrupamento.nome_agrupamento FROM encomenda
+                            <?php
+                            $stmt = $conn->prepare(
+                                "SELECT encomenda.*, utilizador.username, agrupamento.nome_agrupamento FROM encomenda
                     JOIN utilizador ON utilizador.id_utilizador = encomenda.id_utilizador
                     LEFT JOIN agrupamento ON agrupamento.id_agrupamento = encomenda.id_agrupamento
                     WHERE id_encomenda = ?"
-                );
+                            );
 
-                                $stmt->bind_param("i", $_GET["id"]);
+                            $stmt->bind_param("i", $_GET["id"]);
 
-                                $stmt->execute();
+                            $stmt->execute();
 
-                                $result = $stmt->get_result();
+                            $result = $stmt->get_result();
 
-                                if($result->num_rows != 1){
-                                    $stmt->close();
-                                    header("Location: tratar_encomendas.php");
-                                    exit();
-                                }
-
-                                $encomenda = $result->fetch_assoc();
+                            if ($result->num_rows != 1) {
                                 $stmt->close();
+                                header("Location: tratar_encomendas.php");
+                                exit();
+                            }
+
+                            $encomenda = $result->fetch_assoc();
+                            $stmt->close();
                             ?>
                             <h3>Detalhes da encomenda</h3>
 
+                            <!-- Info. gerais -->
                             <div class="row">
                                 <div class="col-4 col-12-small">
                                     <ul class="alt">
@@ -299,33 +321,30 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                     <ul class="alt">
                                         <li>
                                             <strong>Plastificar Manuais: </strong>
-                                            <?php 
-                                            if($encomenda["plast_manuais"] == 1){
+                                            <?php
+                                            if ($encomenda["plast_manuais"] == 1) {
                                                 echo "Sim";
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
                                         </li>
                                         <li>
                                             <strong>Plastificas livro de fichas: </strong>
-                                            <?php 
-                                            if($encomenda["plast_livro_fichas"] == 1){
+                                            <?php
+                                            if ($encomenda["plast_livro_fichas"] == 1) {
                                                 echo "Sim";
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
                                         </li>
                                         <li>
-                                            <strong>Etiquetas: </strong> 
-                                            <?php 
-                                            if($encomenda["etiquetas"] == 1){
+                                            <strong>Etiquetas: </strong>
+                                            <?php
+                                            if ($encomenda["etiquetas"] == 1) {
                                                 echo "Sim - " . $encomenda["obs_etiquetas"];
-                                            }
-                                            else{
+                                            } else {
                                                 echo "Não";
                                             }
                                             ?>
@@ -340,12 +359,12 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                 </div>
                             </div>
 
+                            <!-- Agrupamento / Total / Doc. -->
                             <div class="row">
                                 <div class="col-4 col-12-small">
                                     <p><strong>Agrupamento: </strong><?= $encomenda["nome_agrupamento"] ?></p>
                                 </div>
-                            </div>
-                            <div class="row">
+
                                 <div class="col-4 col-12-small">
                                     <p><strong>Total encomenda: </strong><?= $encomenda["total_encomenda"] ?>€</p>
                                 </div>
@@ -353,6 +372,8 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                     <p><strong>Doc. Encomenda: </strong><a href="<?= $encomenda["doc_encomenda"] ?>" target="_blank">Ver documento</a></p>
                                 </div>
                             </div>
+
+                            <!-- Info. de caução -->
                             <div class="row">
                                 <div class="col-4 col-12-small">
                                     <p><strong>Caução paga ao encomendar: </strong><?= $encomenda["valor_caucao"] ?>€</p>
@@ -362,17 +383,18 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                 </div>
                             </div>
 
+                            <!-- Estado da encomenda -->
                             <div class="row aln-middle" style="margin-top: 10px;">
                                 <div class="col-4 col-12-small">
-                                    <?php 
+                                    <?php
                                     $cores_estados = [
-                                        'registada'=>'darkred',
-                                        'pedida'=>'orange',
-                                        'separada'=>'teal',
-                                        'concluida'=>'goldenrod',
-                                        'entregue'=>'green',
-                                        'cancelada'=>'red',
-                                        'parcialmente_separada'=>'navy'
+                                        'registada' => 'darkred',
+                                        'pedida' => 'orange',
+                                        'separada' => 'teal',
+                                        'concluida' => 'goldenrod',
+                                        'entregue' => 'green',
+                                        'cancelada' => 'red',
+                                        'parcialmente_separada' => 'navy'
                                     ]
                                     ?>
                                     <h4><strong>Estado da encomenda: <span style="color:<?= $cores_estados[$encomenda['estado_encomenda']] ?>"><?= $encomenda["estado_encomenda"] ?></span></strong></h4>
@@ -380,130 +402,141 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                 <div class="col-4 col-12-small" style="margin-bottom: 10px;">
                                     <?php
                                     $estado_encomenda = $encomenda["estado_encomenda"];
-                                    if($estado_encomenda == "separada") {?>
+                                    if ($estado_encomenda == "separada") { ?>
                                         <button class="primary small" id="btnConcluir">Concluir encomenda</button>
                                     <?php }
-                                    if($estado_encomenda == "concluida") {?>
+                                    if ($estado_encomenda == "concluida") { ?>
                                         <button class="primary small" id="btnEntregar">Marcar como entregue</button>
                                     <?php }
-                                     ?>
+                                    ?>
                                 </div>
                                 <div class="col-4">
                                     <?php
                                     $estado_encomenda = $encomenda["estado_encomenda"];
-                                    if($estado_encomenda != "entregue" && $estado_encomenda != "cancelada") {?>
+                                    if ($estado_encomenda != "entregue" && $estado_encomenda != "cancelada") { ?>
                                         <button class="secondary small" id="btnCancelar">Cancelar encomenda</button>
 
                                     <?php }
-                                     ?>
+                                    ?>
                                 </div>
                             </div>
 
+                            <!-- Encomenda parcialmente separada -->
+                            <?php 
+                            if($encomenda["estado_encomenda"] == "parcialmente_separada" && !empty($encomenda["email_encomenda"])){?>
+
+                                <div class="row aln-middle" style="margin-top: 10px;">
+                                    <div class="col">
+                                        <h4 style="display: inline;"><strong>Avisar encomenda parcialmente separada: </strong></h4>
+                                        <button class="small"id="avisar_parcial" data-id_encomenda="<?= $encomenda["id_encomenda"] ?>">Avisar</button>
+                                    </div>
+                                </div>
+                            <?php 
+                            }
+                            ?>
+
                             <!-- Informação acerca do aviso da encomenda -->
                             <div class="row aln-middle" style="margin-top: 10px;">
-                                <?php 
-                                if($encomenda["avisado"] == 1){?>
-                                <div class="col-4 col-12-small">
-                                    <p><strong>Encomenda avisada pela primeira vez: Sim - <?= $encomenda["data_aviso"] ?></strong></p>
-                                </div>
-                                <div class="col-4 co-12-small">
-                                    <?php 
-                                    if(($encomenda["estado_encomenda"] == "concluida" || $encomenda["estado_encomenda"] == "separada") && !empty($encomenda["email_encomenda"])){?>
-                                        <button class="primary small" data-id_encomenda="<?= $encomenda["id_encomenda"] ?>" id="btnNovoAviso">Novo aviso</button>
-                                    <?php }
-                                    ?>
-                                </div>
+                                <?php
+                                if ($encomenda["avisado"] == 1) { ?>
+                                    <div class="col-4 col-12-small">
+                                        <p><strong>Encomenda avisada pela primeira vez: Sim - <?= $encomenda["data_aviso"] ?></strong></p>
+                                    </div>
+                                    <div class="col-4 co-12-small">
+                                        <?php
+                                        if (($encomenda["estado_encomenda"] == "concluida" || $encomenda["estado_encomenda"] == "separada") && !empty($encomenda["email_encomenda"])) { ?>
+                                            <button class="primary small" data-id_encomenda="<?= $encomenda["id_encomenda"] ?>" id="btnNovoAviso">Novo aviso</button>
+                                        <?php }
+                                        ?>
+                                    </div>
 
-                                <?php 
-                                }
-                                else{?>
+                                <?php
+                                } else { ?>
                                     <h4><strong>Encomenda avisada pela primeira vez: Não</strong></h4>
                                 <?php }
-                                
+
                                 ?>
                             </div>
                         </div>
 
                         <!-- Observações -->
-						<div class="box">
-							<h3>Observações adicionais</h2>
+                        <div class="box">
+                            <h3>Observações adicionais</h2>
 
-                            <!-- Somente quando tiver registada/pedida que pode se fazer observações -->
-                            <?php 
-                            $estado_encomenda = $encomenda["estado_encomenda"];
-                            if($estado_encomenda != 'entregue' && $estado_encomenda != 'cancelada'){?>
-                                <h4>Adicionar observação</h4>
-                                <div class="row aln-middle">
-                                    <div class="col-4">
-                                        <textarea name="obs" id="obs" data-id_encomenda="<?= $_GET["id"] ?>"></textarea>
+                                <!-- Somente quando tiver registada/pedida que pode se fazer observações -->
+                                <?php
+                                $estado_encomenda = $encomenda["estado_encomenda"];
+                                if ($estado_encomenda != 'entregue' && $estado_encomenda != 'cancelada') { ?>
+                                    <h4>Adicionar observação</h4>
+                                    <div class="row aln-middle">
+                                        <div class="col-4">
+                                            <textarea name="obs" id="obs" data-id_encomenda="<?= $_GET["id"] ?>"></textarea>
+                                        </div>
+                                        <div class="col-4">
+                                            <button id="btnObs">Adicionar observação</button>
+                                        </div>
+                                        <div class="col-12">
+                                            <p id="msgErro"></p>
+                                        </div>
                                     </div>
-                                    <div class="col-4">
-                                        <button id="btnObs" >Adicionar observação</button>
-                                    </div>
+                                <?php }
+                                ?>
+
+
+                                <div class="row" style="margin-top: 10px;">
                                     <div class="col-12">
-                                        <p id="msgErro"></p>
-                                    </div>
-                                </div>
-                            <?php }
-                            ?>
-
-							
-							<div class="row" style="margin-top: 10px;">
-								<div class="col-12">
-								<?php 
-									$stmt = $conn->prepare(
-										"SELECT * FROM observacao_encomenda
+                                        <?php
+                                        $stmt = $conn->prepare(
+                                            "SELECT * FROM observacao_encomenda
 										JOIN utilizador ON observacao_encomenda.id_utilizador = utilizador.id_utilizador
 										WHERE id_encomenda = ?
                                         ORDER BY data_observacao DESC"
-									);
-									$stmt->bind_param("i", $_GET["id"]);
-									$stmt->execute();
-									$result = $stmt->get_result();
-									$rows = $result->fetch_all(MYSQLI_ASSOC);
+                                        );
+                                        $stmt->bind_param("i", $_GET["id"]);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+                                        $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-									foreach($rows as $obs){
-                                        // Verifica se é uma observação automatica
-                                        if(str_starts_with($obs["observacao_encomenda"],"MPP3:")){
-                                            $obs_automatica = true;
-                                        }
-                                        else{
-                                            $obs_automatica = false;
+                                        foreach ($rows as $obs) {
+                                            // Verifica se é uma observação automatica
+                                            if (str_starts_with($obs["observacao_encomenda"], "MPP3:")) {
+                                                $obs_automatica = true;
+                                            } else {
+                                                $obs_automatica = false;
+                                            }
+                                        ?>
+                                            <dl>
+                                                <dt><?= $obs["username"] ?> : <?= $obs["data_observacao"] ?></dt>
+
+                                                <?php
+                                                if ($obs_automatica) { ?>
+                                                    <dd><strong style="color: green;"><?= $obs["observacao_encomenda"] ?></strong></dd>
+                                                <?php
+                                                } else { ?>
+                                                    <dd><strong style="color: red;"><?= $obs["observacao_encomenda"] ?></strong></dd>
+                                                <?php } ?>
+                                            </dl>
+                                        <?php
                                         }
                                         ?>
-                                        <dl>
-                                            <dt><?= $obs["username"] ?> : <?= $obs["data_observacao"] ?></dt>
-                                            
-                                            <?php
-                                            if($obs_automatica){?>
-                                                <dd><strong style="color: green;"><?= $obs["observacao_encomenda"] ?></strong></dd>
-                                                <?php 
-                                            }
-                                            else{?>
-                                            <dd><strong style="color: red;"><?= $obs["observacao_encomenda"] ?></strong></dd>
-                                            <?php } ?>
-                                        </dl>
-									<?php
-									}
-								?>
-								</div>
-							</div>
-						</div>
+                                    </div>
+                                </div>
+                        </div>
                         <!-- Manuais da encomenda -->
                         <div class="box">
-                            <?php 
-                                $stmt = $conn->prepare(
-                                    "SELECT encomenda_manual.*, manual.*, disciplina.nome_disciplina, utilizador.username FROM encomenda_manual
+                            <?php
+                            $stmt = $conn->prepare(
+                                "SELECT encomenda_manual.*, manual.*, disciplina.nome_disciplina, utilizador.username FROM encomenda_manual
                                     JOIN manual ON manual.id_manual = encomenda_manual.id_manual
                                     JOIN disciplina ON disciplina.id_disciplina = manual.id_disciplina
                                     LEFT JOIN utilizador ON utilizador.id_utilizador = encomenda_manual.id_separado
                                     WHERE id_encomenda = ?"
-                                );
+                            );
 
-                                $stmt->bind_param("i", $_GET["id"]);
-                                $stmt->execute();
-                                $result = $stmt->get_result();
-                                $manuais = $result->fetch_all(MYSQLI_ASSOC);
+                            $stmt->bind_param("i", $_GET["id"]);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            $manuais = $result->fetch_all(MYSQLI_ASSOC);
                             ?>
                             <h3>Manuais da encomenda</h3>
 
@@ -512,8 +545,8 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                     <thead>
                                         <tr>
                                             <th>ID manual</th>
-											<th>ISBN</th>
-											<th>Nome</th>
+                                            <th>ISBN</th>
+                                            <th>Nome</th>
                                             <th>Preço</th>
                                             <th>Código</th>
                                             <th>Utiliza voucher</th>
@@ -523,49 +556,46 @@ function cancelar_encomenda(mysqli $conn, array $request){
                                     </thead>
 
                                     <tbody>
-                                    <?php 
-                                        foreach($manuais as $manual){?>
+                                        <?php
+                                        foreach ($manuais as $manual) { ?>
                                             <tr>
-												<td><?= $manual["id_manual"] ?></td>
+                                                <td><?= $manual["id_manual"] ?></td>
                                                 <td><?= $manual["isbn_manual"] ?></td>
                                                 <td><?= $manual["nome_manual"] ?></td>
                                                 <td><?= $manual["preco_manual"] ?></td>
                                                 <td><?= $manual["cod_manual"] ?></td>
-												<td>
-                                                    <?php 
-                                                    if($manual["voucher"] == 1){?>
+                                                <td>
+                                                    <?php
+                                                    if ($manual["voucher"] == 1) { ?>
                                                         <span>Sim</span>
-                                                        <?php 
-                                                    }
-                                                    else{?>
-														<span>Não</span>
+                                                    <?php
+                                                    } else { ?>
+                                                        <span>Não</span>
                                                     <?php
                                                     }
                                                     ?>
-												</td>
+                                                </td>
                                                 <td>
-                                                    <?php 
-                                                        if(!isset($manual["data_separacao"])){
-                                                            echo "-";
-                                                        }
-                                                        else{
-                                                            echo date('d/m/Y', strtotime($manual["data_separacao"])); 
-                                                        }
+                                                    <?php
+                                                    if (!isset($manual["data_separacao"])) {
+                                                        echo "-";
+                                                    } else {
+                                                        echo date('d/m/Y', strtotime($manual["data_separacao"]));
+                                                    }
                                                     ?>
                                                 </td>
                                                 <td>
-                                                    <?php 
-                                                        if(!isset($manual["id_separado"])){
-                                                            echo "-";
-                                                        }
-                                                        else{
-                                                            echo $manual["username"]; 
-                                                        }
+                                                    <?php
+                                                    if (!isset($manual["id_separado"])) {
+                                                        echo "-";
+                                                    } else {
+                                                        echo $manual["username"];
+                                                    }
                                                     ?>
                                                 </td>
                                             </tr>
                                         <?php }
-                                    ?>
+                                        ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -640,7 +670,7 @@ function cancelar_encomenda(mysqli $conn, array $request){
                             </div>
                         </div>
 
-                        
+
 
 
                     <?php } else {
@@ -679,7 +709,7 @@ function cancelar_encomenda(mysqli $conn, array $request){
     </div>
 
     <!-- Scripts -->
-	<script src="assets/js/detalhe_encomenda.js"></script>
+    <script src="assets/js/detalhe_encomenda.js"></script>
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/browser.min.js"></script>
     <script src="assets/js/breakpoints.min.js"></script>

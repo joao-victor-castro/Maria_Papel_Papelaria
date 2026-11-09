@@ -280,3 +280,27 @@ btnReenviarEmail.addEventListener('click', async function () {
         alert(data["msg"]);
     }
 })
+
+// Botão de avisar encomenda parcialmente 
+const btnAvisarParcial = document.getElementById("avisar_parcial");
+btnAvisarParcial.addEventListener('click', async function () {    
+    id_encomenda = btnAvisarParcial.dataset.id_encomenda;
+    
+    const response = await fetch('detalhe_encomenda.php', {
+        method:"post",
+        headers: {"Content-Type":"application/son"},
+        body:JSON.stringify({
+            acao:"avisar_parcial",
+            id_encomenda : id_encomenda
+        })
+    });
+    
+    const data = await response.json();
+    
+    if(data["resultado"] == "sucesso"){
+        alert(data["msg"]);
+        location.reload();
+    } else {
+        alert(data["msg"]);
+    }
+})
