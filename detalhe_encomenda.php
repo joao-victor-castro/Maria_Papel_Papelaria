@@ -85,13 +85,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             Os melhores cumprimentos, <br>
             Maria Papel Papelaria";
             $assunto = "Livros para levantar";
-            $enviado = enviar_email($conn, $encomenda, $corpo_email, $assunto);
+            
+            // Envia a resposta pro navegador imediatamente
+            ignore_user_abort(true);
 
-            if ($enviado) {
-                echo json_encode(['resultado' => 'sucesso', 'msg' => 'Email reenviado com sucesso!']);
-            } else {
-                echo json_encode(['resultado' => 'erro', 'msg' => 'Falha ao atualizar o email.']);
+            $resposta = json_encode(['resultado'=>'sucesso', 'msg'=>'Email enviado com sucesso!']);
+
+            if(function_exists('fastcgi_finish_request')){
+                echo $resposta;
+                fastcgi_finish_request();
             }
+            else{
+                ob_start();
+                echo $resposta;
+                $tamanho = ob_get_length();
+                header("Content-Type: application/json; charset=utf-8");
+                header("Content-Encoding: none");
+                header("Content-Length: {$tamanho}");
+                header("Connection: close");
+                ob_end_flush();
+                @ob_flush();
+                flush();
+            }
+
+            enviar_email($conn, $encomenda, $corpo_email, $assunto);
             exit();
     }
 }
