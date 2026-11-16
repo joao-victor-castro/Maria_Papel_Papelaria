@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Verificação de sessão em todas as páginas protegidas
 session_start();
 include("db_connect.php");
@@ -23,6 +23,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			echo json_encode($dados);
 			exit();
 
+		case "get_encomendas_agrupamento":
+			$stmt = $conn->prepare(
+				"SELECT agrupamento.nome_agrupamento, COUNT(encomenda.id_encomenda) AS quantidade
+                 FROM agrupamento
+                 LEFT JOIN encomenda ON encomenda.id_agrupamento = agrupamento.id_agrupamento
+                 GROUP BY agrupamento.id_agrupamento, agrupamento.nome_agrupamento
+                 ORDER BY quantidade DESC"
+			);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$dados = [];
+			while ($row = $result->fetch_assoc()) {
+				$dados[] = $row;
+			}
+			$stmt->close();
+			echo json_encode($dados);
+			exit();
+
 		case "get_encomendas_estado":
 			$stmt = $conn->prepare(
 				"SELECT estado_encomenda, COUNT(*) AS quantidade
@@ -36,6 +54,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			while ($row = $result->fetch_assoc()) {
 				$dados[] = $row;
 			}
+			$stmt->close();
+			echo json_encode($dados);
+			exit();
+
+		case "get_manuais_tipo":
+			$stmt = $conn->prepare(
+				"SELECT
+                     SUM(CASE WHEN manual.tipo_manual != 'Livro de Fichas' THEN 1 ELSE 0 END) AS manuais,
+                     SUM(CASE WHEN manual.tipo_manual = 'Livro de Fichas' THEN 1 ELSE 0 END) AS livros_fichas
+                 FROM encomenda_manual
+                 JOIN manual ON manual.id_manual = encomenda_manual.id_manual"
+			);
+			$stmt->execute();
+			$result = $stmt->get_result();
+			$dados = $result->fetch_assoc();
 			$stmt->close();
 			echo json_encode($dados);
 			exit();
@@ -104,6 +137,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 								<h2>Total de encomendas: <?= $total_encomendas ?></h2>
 							</div>
 						</div>
+
+						<!-- Nº de encomendas por ano escolar / Nº de encomendas por agrupamento -->
 						<div class="row">
 							<div class="col-6 col-12-small" style="text-align:center">
 								<h2>Nº de encomendas por ano escolar</h2>
@@ -114,14 +149,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 							</div>
 							<div class="col-6 col-12-small" style="text-align:center">
-								<h2>Nº de encomendas por estado</h2>
-								<div id="estado-cards" class="estado-cards-wrapper"></div>
+								<h2>Nº de encomendas por agrupamento</h2>
+								<div>
+									<canvas id="grafico-agrupamento" width="5"></canvas>
+								</div>
 							</div>
 						</div>
+
+						<!-- Nº de encomendas por estado / Manuais encomendados -->
 						<div class="row" style="margin-top: 2em;">
-							<div class="col-12" style="text-align:center">
-								<h2>Material a pedir &mdash; por estado</h2>
-								<div id="reposicao-cards" class="estado-cards-wrapper"></div>
+							<div class="col-6 col-12-small" style="text-align:center">
+								<h2>Nº de encomendas por estado</h2>
+								<div id="estado-cards" class="estado-cards-wrapper estado-cards-2col"></div>
+							</div>
+							<div class="col-6 col-12-small" style="text-align:center">
+								<h2>Manuais encomendados</h2>
+								<div id="manuais-tipo-cards" class="estado-cards-wrapper"></div>
 							</div>
 						</div>
 					<?php } else {
